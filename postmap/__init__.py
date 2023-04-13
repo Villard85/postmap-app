@@ -12,5 +12,8 @@ app.config.from_object('postmap.config')
 
 db = SQLAlchemy(app)
 
+with app.app_context():
+    db.create_all()
+
 from postmap.views import views
 from postmap.models import tables
