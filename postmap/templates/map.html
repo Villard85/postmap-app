@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="Site description"/> 
+        <meta name="robots" content="index, follow"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <!--link rel="stylesheet" href="{{ url_for('static', filename='map-style.css') }}"/-->
+        <style>
+			*{
+	margin: 0px;
+	padding: 0px;
+	box-sizing: border-box;
+	
+}
+
+main{
+	height: 100vh;
+}
+
+.map-frame, iframe{
+	height: 100%;
+	width: 100%;
+}
+        </style>
+        <title>Map view</title>
+    </head>
+    <body>
+		<div class="status-line">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+					{% for category, message in messages %}
+					<div class="{{ category }}">
+						{{ message }}
+					</div>
+					{% endfor %}
+		{% endwith %}
+		</div>
+		<main>
+			<div class="map-frame">
+				<iframe srcdoc="{{ map_frame }}">
+				</iframe>
+			</div>
+		</main>
+	</body>
+</html>

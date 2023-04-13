@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="app-content">
+	<div class="status-line">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+					{% for category, message in messages %}
+					<div class="{{ category }}">
+						{{ message }}
+					</div>
+					{% endfor %}
+		{% endwith %}
+	</div>
+			<div class='file-upload'>
+				<h2> Загрузка файлов </h2>
+				<p>Загрузите файлы с геоданными в формате GPX</p>
+				<h3>Плановый трек</h3>
+				<form method="POST" action="{{ url_for('add_plan') }}" enctype="multipart/form-data"
+				accept=".gpx">
+					<p>
+						<input type="file" name="plan-file">
+					</p>
+					<p>
+						<input type="Submit" value="Загрузить">
+					</p>
+				</form>
+				<h3>Фактический трек</h3>
+				<form method="POST" action="{{ url_for('add_fact') }}" enctype="multipart/form-data">
+					<p>
+						<input type="file" name="fact-file">
+					</p>
+					<p>
+						<input type="Submit" value="Загрузить">
+					</p>
+				</form>
+				<h3>Файл с путевыми точками/POI</h3>
+				<form method="POST" action="{{ url_for('add_poi') }}" enctype="multipart/form-data">
+					<p>
+						<input type="file" name="poi-file">
+					</p>
+					<p>
+						<input type="Submit" value="Загрузить">
+					</p>
+				</form>
+				<h3>Файлы изображений</h3>
+				<form action="{{ url_for('add_img') }}" class="dropzone"></form>
+				<script	src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.js"></script>
+			</div>
+	<div class='track-info'>
+		<h2>Загруженные треки</h2>
+		<form class="clear-form" action="{{ url_for('clear_tracks') }}" method="POST">
+						<input class="clear-button" type="Submit" value="Удалить все треки" />
+		</form>
+		<div id="track-table"></div>
+		<script>
+				const tableDiv1 = document.getElementById("track-table");
+
+						/*'user_id' and 'time' columns is for development purposes only!*/
+						const gr1 = new gridjs.Grid({
+								columns: [
+								  { id: 'id', 'hidden': true },
+								  {id: 'user_id', name: 'Идентификатор пользователя', 'hidden': true},
+								  { id: 'name', name: 'Имя файла'},
+								  { id: 'info', name: 'Информация', formatter: (cell) => gridjs.html(`${cell}`)},
+								  { id: 'time', name: 'Время добавления', 'hidden': true},
+								  { id: 'role', name: 'Назначение'},
+									{id: 'del', name: 'Действия', 
+										formatter: (cell, row) => {
+											return gridjs.h('button', {
+												className: 'del-button',
+												onClick: () => {
+													fetch('/api/delete_trk', {
+														method: 'POST',
+														headers: {'Content-Type': 'application/json'},
+														body: JSON.stringify({	
+															id: row.cells[0].data
+														})
+													}).then(() => {
+														window.location.href = "{{ url_for('index') }}"});
+												}}, 'Удалить');
+										}}
+									   ],
+								server: {
+									url: '/api/trk_data',
+									then: results => results.data,
+									}
+								,
+								sort: true,
+								pagination: true,
+								resizable: true
+							  }).render(tableDiv1);
+		</script>
+	</div>
+
+	<div class="image-info">
+		<h2>Загруженные изображения</h2>
+		<form class="clear-form" action="{{ url_for('clear_images') }}" method="POST">
+						<input class="clear-button" type="Submit" value="Удалить все изображения" />
+		</form>
+		<div id="image-table"></div>
+		<script>
+				const tableDiv2 = document.getElementById("image-table");
+
+						/*'user_id' and 'time' columns is for development purposes only!*/
+						const gr2 = new gridjs.Grid({
+								columns: [
+								  { id: 'id', 'hidden': true },
+								  {id: 'user_id', name: 'Идентификатор пользователя', 'hidden': true},
+								  { id: 'name', name: 'Имя файла'},
+								  { id: 'img', name: 'Эскиз', 
+									  formatter: (cell) => gridjs.html(`<img src="data:image/png;base64, ${cell}" width=240>`)},
+								  { id: 'time', name: 'Время добавления', 'hidden': true},
+									{id: 'del', name: 'Действия', 
+										formatter: (cell, row) => {
+											return gridjs.h('button', {
+												className: 'del-button',
+												onClick: () => {
+													fetch('/api/delete_img', {
+														method: 'POST',
+														headers: {'Content-Type': 'application/json'},
+														body: JSON.stringify({	
+															id: row.cells[0].data
+														})
+													}).then(() => {
+														window.location.href = "{{ url_for('index') }}"});
+												}}, 'Удалить');
+										}}
+									   ],
+								server: {
+									url: '/api/img_data',
+									then: results => results.data,
+									}
+								,
+								sort: true,
+								pagination: true,
+								resizable: true
+							  }).render(tableDiv2);
+		</script>
+	</div>
+
+	<div class="process-section">
+		<h2>Создание карты</h2>
+		<form class="proc-form" method="POST" action="{{ url_for('process') }}">
+			<label class="check-label" for="proc-simp">Упростить трек</label>
+			<input class="proc-option" type='checkbox' name="Simplify" id="proc-simp"/>
+			<label class="input-label" for="epsilon">Эпсилон [м]</label>
+			<input class="proc-input" type="number" step="0.1" name="epsilon" id="epsilon"
+			 value="5" required><br>
+			<label class="check-label" for="proc-mark">Разметить трек</label>
+			<input class="proc-option" type='checkbox' name="Mark" id="proc-mark"/>
+			<label class="input-label" for="epsilon">Шаг разметки [км]</label>
+			<input class="proc-input" type="number" step="1" name="step" id="step" 
+			value="2" required><br>
+			<label class="check-label" for="proc-smooth">Сгладить трек</label>
+			<input class="proc-option" type='checkbox' name="Smooth"/ id="proc-smooth"><br>
+			<label class="check-label" for="proc-img">Добавить изображения</label>
+			<input class="proc-option" type='checkbox' name="Add-images" id="proc-img"/>
+			<label class="input-label" for="time-shift">Сдвиг времени от UTC [ч]</label>
+			<input class="proc-input" type="number" step="1" name="time-shift" id="time-shift" 
+			value="0" required><br>
+			<label class="check-label" for="proc-stats">Вычислить статистику трека</label>
+			<input class="proc-option" type='checkbox' name="Calculate-stats" id="proc-stats"/>
+			<label class="input-label" for="stop-threshold">Порог остановки [км/ч]</label>
+			<input class="proc-input" type="number" step="0.1" name="stop-threshold" id="stop-threshold" 
+			value="1" required><br>
+			<input class="check-label" type="Submit" value="Нарисовать карту">
+		</form>
+		{% if results==True %}
+			<a class="download-link" target="_blank" href="{{ url_for('show_map') }}">
+				-> Показать карту в отдельной вкладке</a><br>
+			<a class="download-link" target="_blank" href="{{ url_for('download_gpx') }}">
+				-> Скачать обработанный трек (gpx)</a><br>
+			<a class="download-link" target="_blank" href="{{ url_for('download_trk_csv') }}">
+				-> Скачать обработанный трек (csv)</a><br>
+			<a class="download-link" target="_blank" href="{{ url_for('download_pts_csv') }}">
+				-> Скачать путевые точки (csv)</a>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}

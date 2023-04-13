@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="Site description"/> 
+        <meta name="robots" content="index, follow"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link rel="icon" href="{{ url_for('static', filename='earth.ico') }}"/>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+        <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+        <title>Картограф</title>
+    </head>
+    <header>
+			<div class="logo-container">
+				<img class="logo-image"
+					 width="60"
+					 height="60"
+					 src="{{ url_for('static', filename='earth.png') }}"
+					 alt="Logo"/>
+				<h2 class="logo">Картограф</h2>
+			</div>
+			<nav>
+				<ul class="nav-links">
+					<li>
+						<a class="nav-link" href="{{ url_for('index') }}">
+							<img src="{{ url_for('static', filename='home.png') }}" 
+								alt="Home icon"
+								width=20px height=20px/>
+							На главную
+						</a>
+					</li>
+					<li>
+						<a class="nav-link" href="{{ url_for('about') }}">
+							<img src="{{ url_for('static', filename='info.png') }}" 
+							alt="Help icon"
+							width=20px height=20px/>
+							Справка
+						</a>
+					</li>
+				</ul>
+			</nav>
+	</header>
+    <body>
+		<main>
+			{% block content %}
+			{% endblock %}			
+		</main>
+	</body>
+</html>
+		
+		
+		
+    

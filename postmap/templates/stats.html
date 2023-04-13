@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block file_info %}
+<h2>Информация о загруженных файлах</h2>
+<div class='file-info'>
+	<table class="file-table">
+		<tr>
+			<th>Назначение файла</th>
+			<th>Имя файла</th>
+			<th>Информация о файле</th>
+		</tr>
+		<tr>
+			<td class="first-col">
+			Плановый трек
+			</td>
+			{% if not info['plan_fname'] == '' %}
+			<td class="other-col">
+				{{ info['plan_fname'] }}
+			</td>
+			<td class="text-col">
+			{% for line in info['plan_info'] %}
+				{{ line|safe }}
+			{% endfor %}
+			</td>
+			{% else %}
+			<td class="other-col">Файл не загружен</td>
+			<td class="text-col"></td>
+			{% endif %}
+		</tr>
+		<tr>
+			<td class="first-col">
+			Фактический трек
+			</td>
+			{% if not info['fakt_fname'] == '' %}
+			<td class="other-col">
+				{{ info['fakt_fname'] }}
+			</td>
+			<td class="text-col">
+			{% for line in info['fakt_info'] %}
+				{{ line|safe }}
+			{% endfor %}
+			</td>
+			{% else %}
+			<td class="other-col">Файл не загружен</td>
+			<td class="text-col"></td>
+			{% endif %}
+		</tr>
+		<tr>
+			<td class="first-col">
+			Файл с путевыми точками
+			</td>
+			{% if not info['poi_fname'] == '' %}
+			<td class="other-col">
+				{{ info['poi_fname'] }}
+			</td>
+			<td class="text-col">
+				{{ info['poi_info'] }}
+			</td>
+			{% else %}
+			<td class="other-col">Файл не загружен</td>
+			<td class="text-col"></td>
+			{% endif %}
+		</tr>
+	</table>
+</div>
+{% endblock %}
+{% block process_form %}
+	{% if info['fakt_fname']!='' %}
+	<div class="process-section">
+		<h2>Обработка трека</h2>
+		<form class="proc-form" method="POST" action="{{ url_for('process') }}">
+			<label class="check-label" for="proc-simp">Упростить</label>
+			<input class="proc-option" type='checkbox' name="Simplify" id="proc-simp"/>
+			<label class="input-label" for="epsilon">Эпсилон, м</label>
+			<input class="proc-input" type="number" step="0.1" name="epsilon" id="epsilon"
+			 value="5" required><br>
+			<label class="check-label" for="proc-mark">Разметить</label>
+			<input class="proc-option" type='checkbox' name="Mark" id="proc-mark"/>
+			<label class="input-label" for="epsilon">Шаг разметки, км</label>
+			<input class="proc-input" type="number" step="0.1" name="step" id="step" 
+			value="2" required><br>
+			<label class="check-label" for="proc-smooth">Сгладить</label>
+			<input class="proc-option" type='checkbox' name="Smooth"/ id="proc-smooth"><br>
+			<label class="check-label" for="proc-img">Добавить изображения</label>
+			<input class="proc-option" type='checkbox' name="Add-images" id="proc-img"/><br>
+			<label class="check-label" for="proc-stats">Вычислить статистику</label>
+			<input class="proc-option" type='checkbox' name="Calculate-stats" id="proc-stats"/>
+			<label class="input-label" for="stop-threshold">Порог остановки, км/ч</label>
+			<input class="proc-input" type="number" step="0.1" name="stop-threshold" id="stop-threshold" 
+			value="1" required><br>
+			<input class="check-label" type="Submit" value="Обработать">
+		</form>
+	</div>
+	{% endif %}
+{% endblock %}
+{% block map %}
+{% if info['show_map'] %}
+<h2>Треки на карте</h2>
+<a class="download-link" target="_blank" href="{{ url_for('draw_map') }}">Показать карту в отдельной вкладке</a>
+<div class="map-frame">
+	<iframe srcdoc="{{ info['map_frame'] }}">
+	</iframe>
+</div>
+{% endif %}
+{% endblock %}
+

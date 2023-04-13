@@ -1,0 +1,263 @@
+*{
+	margin: 0px;
+	padding: 0px;
+	box-sizing: border-box;
+	
+}
+
+:root {
+  --box-bg-color: rgb(202, 220, 255, 0.95);
+  --border-color: #0009A3;
+  --del-border-color: #AF1E00;
+}
+
+
+html{
+	font-size: 60%;
+	height: 100vh;
+}
+
+body{
+	background-position: center;
+	background-size: cover;
+	background-image: url("/static/digimap.jpg");
+}
+
+main{
+	position: relative;
+	top: 8.5rem;
+}
+
+header{
+	display: flex;
+	width: 100%;
+	margin: auto;
+	align-items: center;
+	background-color: white;
+	position: fixed;
+	top: 0px;
+	z-index: 12;
+	/*background-position: left;
+	background-size: 50%, 25%;
+	background-image: url("/static/digimap.jpg");*/
+}
+
+.logo-container, .nav-links{
+	display: flex;
+	align-items: center;
+}
+
+.logo{
+	font-weight: bold;
+	font-size: 3rem;
+	margin: 5px;
+	text-shadow: 1px 2px 8px gray;
+}
+
+.logo-image{
+	margin: 10px;
+}
+
+.logo-container{
+	/*background-color: #DFF4F8;*/
+	flex: 2;
+}
+nav{
+	/*background-color: #FFF2C9;*/
+	flex: 2;
+}
+
+.nav-links{
+	justify-content: flex-end;
+	list-style: none;
+	padding: 10px;
+}
+
+.nav-link{
+	font-size: 2rem;
+	text-decoration: none;
+	color: white;
+	text-shadow: 1px 1px 10px white;
+	background-color: rgb(0, 0, 0, 0.3);
+	padding: 20px;
+	margin-left: 10px;
+	border-radius: 10px;
+}
+
+.nav-link:hover{
+	background-color: #0036B8;
+}
+
+div.about-box a, a{
+	text-decoration: none;
+	font-size: 2rem;
+	color: #0234BC;
+}
+
+.app-content{
+	display: grid;
+	height: 100%;
+	grid-template-rows: 0.5fr 10fr 20fr;
+	grid-template-columns: 4fr 5fr;
+	grid-template-areas:
+	"box1 box1"
+	"box2 box3"
+	"box5 box4";
+}
+
+.file-upload, .track-info, .image-info, .process-section, .about-box{
+	background-color: var(--box-bg-color);
+	margin: 1rem;
+	border-radius: 5px;
+	border: solid 0.3em;
+	border-color: var(--border-color);
+	border-style: 
+}
+
+.about-box{
+	margin: 2rem 10rem;
+}
+
+.status-line{
+	grid-area: box1;
+}
+
+.file-upload{
+	grid-area: box2;
+}
+
+.track-info{
+	grid-area: box3;
+}
+
+.image-info{
+	grid-area: box4;
+}
+
+.process-section{
+	grid-area: box5;
+}
+
+[type="Submit"]{
+	margin: 1rem;
+	font-size: 1.8rem;
+	font-family: serif;
+	color: black;
+	padding: 10px;
+	border: solid 2px;
+	border-color: var(--border-color);
+	border-radius: 1rem;
+	cursor: pointer;
+	width: 40%;
+}
+[type="Submit"]:hover{
+	background-color: var(--border-color);
+	color: white;
+	
+}
+
+.del-button, .clear-button{
+	font-size: 1.8rem;
+	color: var(--del-border-color);
+	padding: 10px;
+	font-family: serif;
+	border: solid 2px;
+	border-radius: 1rem;
+	cursor: pointer;
+}
+
+.del-button:hover, .clear-button:hover{
+	background-color: var(--del-border-color);
+	color: white;
+}
+
+ul{
+	font-size: 1.8rem;
+	margin-left: 2rem;
+}
+
+ul.contents-list{
+	margin-left: 4rem;
+}
+
+p, li{
+	font-size: 2rem;
+	margin-left: 2rem;
+	margin-right: 2rem;
+	margin-bottom: 1rem;
+}
+
+#track-table, .dropzone, #image-table{
+	margin: 20px;
+	font-size: 1.8rem;
+}
+
+.good{
+	color: #129A1A;
+	font-size: 2rem;
+	padding-left: 3rem;
+	background-color: #E4FEE8;
+}
+
+.bad{
+	color: #C33B0B;
+	font-size: 2rem;
+	padding-left: 3rem;
+	background-color: #FEE6E4;
+}
+
+input{
+	margin: 0.5rem;
+	margin-left: 2rem;
+	font-size: 2rem;
+}
+
+h1{
+	font-size: 3rem;
+	margin-bottom: 1rem;
+	margin-top: 1rem;
+	margin-left: 1rem;
+}
+
+h2{
+	font-size: 2.5rem;
+	margin-bottom: 1rem;
+	margin-top: 1rem;
+	margin-left: 1.5rem;
+}
+h3{
+	font-size: 2rem;
+	margin-bottom: 1rem;
+	margin-top: 1rem;
+	margin-left: 2rem;
+}
+
+.download-link{
+	font-size: 2rem;
+	margin: 3rem;
+	
+}
+.download-link:hover{
+	background-color: #D6D6D6;
+	border-radius: 10px
+}
+
+form label{
+	font-size: 1.8rem;
+	margin-left: 3rem;
+}
+
+.proc-input{
+	width: 10rem;
+}
+
+code{
+	font-size: 2rem;
+}
+/*form.proc-form {
+	display: grid;
+	height: 80vh;
+	grid-template-columns: 2fr 1fr 2fr 3fr;
+	
+}*/
+
