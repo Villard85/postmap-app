@@ -1,0 +1,8 @@
+*.geany
+*.sh
+config.py
+/venv/
+/__pycache__/
+map_servers.txt
+test.py
+
