@@ -3,6 +3,8 @@
 config.py
 /venv/
 /__pycache__/
+__pycache__/
 map_servers.txt
 test.py
+flask-setup
 
