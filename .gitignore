@@ -1,6 +1,5 @@
 *.geany
 *.sh
-config.py
 /venv/
 /__pycache__/
 __pycache__/
