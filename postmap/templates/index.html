@@ -168,11 +168,11 @@
 		{% if results==True %}
 			<a class="download-link" target="_blank" href="{{ url_for('show_map') }}">
 				-> Показать карту в отдельной вкладке</a><br>
-			<a class="download-link" target="_blank" href="{{ url_for('download_gpx') }}">
+			<a class="download-link" href="{{ url_for('download_gpx') }}">
 				-> Скачать обработанный трек (gpx)</a><br>
-			<a class="download-link" target="_blank" href="{{ url_for('download_trk_csv') }}">
+			<a class="download-link" href="{{ url_for('download_trk_csv') }}">
 				-> Скачать обработанный трек (csv)</a><br>
-			<a class="download-link" target="_blank" href="{{ url_for('download_pts_csv') }}">
+			<a class="download-link" href="{{ url_for('download_pts_csv') }}">
 				-> Скачать путевые точки (csv)</a>
 		{% endif %}
 	</div>

@@ -167,7 +167,10 @@ def make_line(gpx):
 def track_to_csv(gpx):
 	lines=[]
 	lines.append('lat, lon, ele[m], dist[m], time, speed[m/s]')
-	pts = gpx.tracks[0].segments[0].points
+	try:
+		pts = gpx.tracks[0].segments[0].points
+	except IndexError:
+		pts = []
 	length = make_length_list(gpx)[0]
 	logging.debug(f'Lenght length = {len(length)}')
 	logging.debug(f'Points length = {len(pts)}')
@@ -283,7 +286,10 @@ def proper_time(interval):
 	
 def make_length_list(gpx):
 	length_list=[]
-	points = [(p.latitude, p.longitude) for p in gpx.tracks[0].segments[0].points]
+	try:
+		points = [(p.latitude, p.longitude) for p in gpx.tracks[0].segments[0].points]
+	except IndexError:
+		return length_list, tuple([0, 0])
 	l=haversine(points[0], points[1])
 	length_list.append(l)
 	for i in range(1, len(points)):
@@ -536,6 +542,9 @@ def draw_map(
 		lon = np.mean([p[1] for p in plan_track_line])
 		# lat = plan_track['coords']['lat'].mean()
 		# lon = plan_track['coords']['lon'].mean()
+	elif len(poi_list)>0:
+		lat=np.mean([m.location[0] for m in poi_list])
+		lon=np.mean([m.location[1] for m in poi_list])
 	else:
 		lat=0
 		lon=0
@@ -585,3 +594,10 @@ def draw_map(
 	map_html = get_map_src(map_view._repr_html_())
 	return map_html
 
+def clear_results():
+	results = Result.query.filter(Result.user_id==session['user_id'])
+	for result in results:
+		db.session.delete(result)
+	db.session.commit()
+	return 0
+	

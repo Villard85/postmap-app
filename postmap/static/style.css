@@ -25,7 +25,7 @@ body{
 
 main{
 	position: relative;
-	top: 8.5rem;
+	/*top: 8.5rem;*/
 }
 
 header{
@@ -34,7 +34,7 @@ header{
 	margin: auto;
 	align-items: center;
 	background-color: white;
-	position: fixed;
+	position: relative;
 	top: 0px;
 	z-index: 12;
 	/*background-position: left;
@@ -97,7 +97,7 @@ div.about-box a, a{
 .app-content{
 	display: grid;
 	height: 100%;
-	grid-template-rows: 0.5fr 10fr 20fr;
+	grid-template-rows: masonry;
 	grid-template-columns: 4fr 5fr;
 	grid-template-areas:
 	"box1 box1"
@@ -107,7 +107,7 @@ div.about-box a, a{
 
 .file-upload, .track-info, .image-info, .process-section, .about-box{
 	background-color: var(--box-bg-color);
-	margin: 1rem;
+	margin: 0.5vw;
 	border-radius: 5px;
 	border: solid 0.3em;
 	border-color: var(--border-color);
@@ -115,7 +115,7 @@ div.about-box a, a{
 }
 
 .about-box{
-	margin: 2rem 10rem;
+	margin: 2vw 8vw;
 }
 
 .status-line{

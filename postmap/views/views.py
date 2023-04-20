@@ -48,6 +48,7 @@ def about():
 @app.route('/add_plan', methods=['POST'])
 def add_plan():
 	session['results']=False
+	clear_results()
 	plan_file = request.files['plan-file']
 	gpx, info = upload_trk_file(plan_file)
 	if gpx == None:
@@ -88,6 +89,7 @@ def add_plan():
 @app.route('/add_faсt', methods=['POST'])
 def add_fact():
 	session['results']=False
+	clear_results()
 	faсt_file = request.files['fact-file']
 	gpx, info = upload_trk_file(faсt_file)
 	if gpx == None:
@@ -173,6 +175,7 @@ def add_poi():
 @app.route('/add_images', methods = ['POST'])
 def add_img():
 	session['results']=False
+	clear_results()
 	img_file = request.files['file']
 	fname = img_file.filename
 	if fname != '':
@@ -326,8 +329,8 @@ def process():
 		if len(fact_line)>0:
 			proc_gpx, poi = make_poi(proc_gpx, poi_gpx)
 		else:
-			#blank_gpx=gpxpy.gpx.GPX()
-			poi = make_poi(blank_gpx, poi_gpx)[1]
+			blank_gpx=gpxpy.gpx.GPX()
+			proc_gpx, poi = make_poi(blank_gpx, poi_gpx)
 	
 	map_frame = draw_map(plan_line, fact_line, 
 						proc_line, color_line,
@@ -346,7 +349,7 @@ def process():
 		db.session.add(map_page)
 	results_entry = Result.query.filter(Result.user_id==session['user_id'], 
 			Result.role_id=='GPX').first()
-	if len(proc_line)>0:
+	if len(proc_line)>0 or len(poi)>0:
 		if results_entry:
 			results_entry.content = proc_gpx.to_xml('1.0')
 		else:
@@ -371,8 +374,12 @@ def show_map():
 def download_gpx():
 	upload = Result.query.filter(Result.user_id==session['user_id'], 
 		Result.role_id=='GPX').first()
-	return send_file(BytesIO(upload.content.encode('utf-8')), 
+	if upload:
+		return send_file(BytesIO(upload.content.encode('utf-8')), 
 				download_name='result.gpx', as_attachment=True )
+	else:
+		flash('Отсутствуют файлы для скачивания', 'bad')
+		return redirect(url_for('index'))
 
 @app.errorhandler(413)
 def large_file(e):
@@ -382,14 +389,22 @@ def large_file(e):
 def download_trk_csv():
 	upload = Result.query.filter(Result.user_id==session['user_id'], 
 		Result.role_id=='GPX').first()
-	gpx = gpxpy.parse(upload.content)
-	return send_file(track_to_csv(gpx), 
+	if upload:
+		gpx = gpxpy.parse(upload.content)
+		return send_file(track_to_csv(gpx), 
 			download_name='track.csv', as_attachment=True)
+	else:
+		flash('Отсутствуют файлы для скачивания', 'bad')
+		return redirect(url_for('index'))
 	
 @app.route('/download/pts_csv')
 def download_pts_csv():
 	upload = Result.query.filter(Result.user_id==session['user_id'], 
 		Result.role_id=='GPX').first()
-	gpx = gpxpy.parse(upload.content)
-	return send_file(wpts_to_csv(gpx), 
+	if upload:
+		gpx = gpxpy.parse(upload.content)
+		return send_file(wpts_to_csv(gpx), 
 			download_name='points.csv', as_attachment=True)
+	else:
+		flash('Отсутствуют файлы для скачивания', 'bad')
+		return redirect(url_for('index'))
