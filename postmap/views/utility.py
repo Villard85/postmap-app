@@ -8,7 +8,7 @@ import string
 from random import choice
 import re
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import gpxpy
 from postmap.views.gps_utils import haversine
@@ -19,6 +19,7 @@ from io import BytesIO
 # Import image libraries
 from PIL import Image as pImage
 from PIL import UnidentifiedImageError
+from PIL import ExifTags
 import base64
 # Folium map imports
 import folium
@@ -200,7 +201,7 @@ def track_to_csv(gpx):
 		line = ','.join(s)
 		lines.append(line)
 	lines = '\n'.join(lines)
-	logging.debug(f'CSV lines: {lines}')
+	#logging.debug(f'CSV lines: {lines}')
 	csv = BytesIO(lines.encode('utf-8'))
 	return csv
 
@@ -293,7 +294,7 @@ def make_length_list(gpx):
 	l=haversine(points[0], points[1])
 	length_list.append(l)
 	for i in range(1, len(points)):
-		logging.debug(f'point1={points[i]}, point2={points[i-1]}')
+		#logging.debug(f'point1={points[i]}, point2={points[i-1]}')
 		l +=haversine(points[i], points[i-1])
 		length_list.append(l)
 	l=[abs(l-length_list[-1]//2) for l in length_list]
@@ -426,7 +427,7 @@ def make_marks(gpx, step):
 	marks = []
 	mark_symbols = []
 	html_mark = """
-		     <div style="font-family: courier new; font-size: 120%; color: green">{0}
+		     <div style="font-family: courier new; font-size: 120%; color: darkgreen; text-shadow: 0 2px 2px white, 0 -2px 2px white, 2px 0 2px white, -2px 0 2px white;">{0}
 		       </div>""".format
 	length = 0
 	for i in range(1, len(i_line)):
@@ -451,6 +452,9 @@ def make_marks(gpx, step):
 def make_image_points(gpx, offset: int):
 	logging.info('Make images call')
 	image_markers=[]
+	t = None
+	lat = None
+	lon = None
 	if gpx.has_times():
 		html = '<img src="data:image/png;base64,{}">'.format
 		images = Image.query.filter(Image.user_id==session['user_id']).all()
@@ -461,34 +465,49 @@ def make_image_points(gpx, offset: int):
 		i = 0
 		for image in images:
 			logging.debug(f'Image name: {image.name}')
-			t = datetime(year = int(image.name[3:7]), 
-			month = int(image.name[7:9]),
-			day = int(image.name[9:11]),
-			hour = int(image.name[12:14]),
-			minute = int(image.name[14:16]),
-			second = int(image.name[16:18]), tzinfo=points[0].time.tzinfo)
-			logging.debug(f'Image time: {t}')
-			hr = t.hour - offset
-			if hr>=0:
- 				t=t.replace(hour = hr)
+			if re.search('^img[0-9]{8}-[0-9]{6}\.jpg', image.name.lower()):
+				t = datetime(year = int(image.name[3:7]), 
+				month = int(image.name[7:9]),
+				day = int(image.name[9:11]),
+				hour = int(image.name[12:14]),
+				minute = int(image.name[14:16]),
+				second = int(image.name[16:18]), tzinfo=points[0].time.tzinfo)
+				logging.info(f'Image time: {t}')
+			elif not image.shoot_time is None:
+				t = image.shoot_time
+				t = t.replace(tzinfo=points[0].time.tzinfo)
+				logging.info(f'Image time: {t}')
+			if not t is None:
+				hr = t.hour - offset
+				if hr>=0:
+					t=t.replace(hour = hr)
+				else:
+					t=t.replace(day = t.day-1, hour = 24+hr)
+				while t>points[i].time and i<len(points)-1:
+					i += 1
+				lat = points[i].latitude
+				lon = points[i].longitude
+				logging.info(f'Image {image.name} located by time')
+				logging.info(f'Image {image.name} location: lat={lat}, lon={lon}')
+			elif not image.lat is None and not image.lon is None:
+				lat = float(image.lat)
+				lon = float(image.lon)
+				logging.info(f'Image {image.name} located by geoExif')
 			else:
- 				t=t.replace(day = t.day-1, hour = 24+hr)
-			while t>points[i].time and i<len(points)-1:
-				i += 1
-			lat = points[i].latitude
-			lon = points[i].longitude
-			gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(
-			latitude = lat, longitude = lon, 
-			name =  image.name, symbol='Box, Blue', time = points[i].time,
-			comment=f'{points[i].time} UTC'))
-			iframe = IFrame(html(image.img), 
-				width=image.width*1.02, height=image.height*1.05)
-			popup = folium.Popup(iframe, max_width=image.width*1.02)
-			image_icon = folium.Icon(icon='camera', color = 'lightgreen', 
+				logging.info(f'Image {image.name} is not located')
+			if not lat is None and not lon is None:
+				gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(
+				latitude = lat, longitude = lon, 
+				name =  image.name, symbol='Box, Blue', time = points[i].time,
+				comment=f'{points[i].time} UTC'))
+				iframe = IFrame(html(image.img), 
+					width=image.width*1.02, height=image.height*1.05)
+				popup = folium.Popup(iframe, max_width=image.width*1.02)
+				image_icon = folium.Icon(icon='camera', color = 'lightgreen', 
 							icon_color='white', prefix='fa')
-			marker = folium.Marker(location=[lat, lon], 
+				marker = folium.Marker(location=[lat, lon], 
                             popup=popup, tooltip=f'{points[i].time} UTC', icon=image_icon)
-			image_markers.append(marker)
+				image_markers.append(marker)
 	return gpx, image_markers
 		
 
@@ -601,3 +620,42 @@ def clear_results():
 	db.session.commit()
 	return 0
 	
+def cut_name(name: str) -> str:
+	result = name
+	list_glas_ru = ['а', 'у', 'о', 'ы', 'и', 'э', 'я', 'ю', 'ё', 'е',
+			  'А', 'У', 'О', 'Ы', 'И', 'Э', 'Я', 'Ю', 'Ё', 'Е']
+	list_glas_en = ['A', 'E', 'I', 'O', 'U', 'a', 'e', 'i', 'o', 'u']
+	for letter in list_glas_ru:
+		result = result.replace(letter, '')
+	for letter in list_glas_en:
+		result = result.replace(letter, '')
+	return result	
+
+def locate_from_exif(raw_ExifData):
+	lat=None
+	lon=None
+	shoot_time=None
+	if not raw_ExifData is None:
+		exifData = {}
+		for tag, value in raw_ExifData.items():
+			decodedTag = ExifTags.TAGS.get(tag, tag)
+			exifData[decodedTag] = value
+		if exifData.get('GPSInfo'):
+			gpsData = {}
+			for tag, value in exifData['GPSInfo'].items():
+				decodedTag = ExifTags.GPSTAGS.get(tag, tag)
+				gpsData[decodedTag] = value
+			try:
+				lat = float(gpsData['GPSLatitude'][0][0])/gpsData['GPSLatitude'][0][1]+float(gpsData['GPSLatitude'][1][0])/gpsData['GPSLatitude'][1][1]/60                 +float(gpsData['GPSLatitude'][2][0])/gpsData['GPSLatitude'][2][1]/3600
+				if(gpsData['GPSLatitudeRef'] != u'N'):
+					lat = -lat
+				lon = float(gpsData['GPSLongitude'][0][0])/gpsData['GPSLongitude'][0][1]+float(gpsData['GPSLongitude'][1][0])/gpsData['GPSLongitude'][1][1]/60                 +float(gpsData['GPSLongitude'][2][0])/gpsData['GPSLongitude'][2][1]/3600
+				if(gpsData['GPSLongitudeRef'] != u'E'):
+					lon = -lon
+			except KeyError:
+				pass
+		else:
+			logging.info(exifData['DateTime'])
+			shoot_time = datetime.strptime(exifData['DateTime'], '%Y:%m:%d %H:%M:%S').replace(tzinfo=timezone.utc)
+			logging.info(shoot_time.tzinfo)
+	return lat, lon, shoot_time

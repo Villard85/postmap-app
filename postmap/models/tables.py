@@ -15,15 +15,21 @@ class Image(db.Model):
 	img = db.Column(db.Text)
 	width = db.Column(db.Integer)
 	height = db.Column(db.Integer)
+	lat = db.Column(db.Text)
+	lon = db.Column(db.Text)
+	shoot_time=db.Column(db.DateTime)
 	time = db.Column(db.DateTime)
 	
 	def __init__(self, user_id=None, name=None, img=None, width=0,
-	height=0):
+	height=0, lat = None, lon = None, shoot_time = None):
 		self.user_id = user_id
 		self.name = name
 		self.img = img
 		self.width = width
 		self.height = height
+		self.lat = lat
+		self.lon = lon
+		self.shoot_time = shoot_time
 		self.time = datetime.utcnow()
 		
 		

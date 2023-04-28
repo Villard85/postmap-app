@@ -28,7 +28,7 @@ logging.basicConfig(format=format,
 	datefmt="%H:%M:%S")
 	
 # comment next line if debug is not needed	
-#logging.getLogger().setLevel(logging.DEBUG)
+# logging.getLogger().setLevel(logging.DEBUG)
 
 #========================
 # View functions
@@ -184,33 +184,37 @@ def add_img():
 		if file_ext not in app.config['IMG_EXTENSIONS']:
 			flash('Неверное расширение файла', 'bad')
 			return 'Недопустимое расширение файла', 400
-	if not re.search('^img[0-9]{8}-[0-9]{6}\.jpg', fname.lower()):
-		flash('Неверный формат имени файла', 'bad')
-		return 'Недопустимое имя файла', 400
-	try:
-		img = pImage.open(img_file)
-		w,h = img.size
-		#print("w{0}, h{1}".format(w,h))
-		l = min(w,h)
-		scale_factor = l//400
-		img = img.reduce(scale_factor)
-		w,h = img.size
-		buf = BytesIO()
-		img.save(buf, 'jpeg')
-		img_text = base64.b64encode(buf.getbuffer()).decode()
-		new_img = Image(
-			user_id = session['user_id'],
-			name = img_file.filename,
-			img = img_text,
-			width = w,
-			height = h)
-		db.session.add(new_img)
-		db.session.commit()
-		flash('Изображение успешно загружено', 'good')
-		
-	except UnidentifiedImageError:
-		logging.exception('Error reading image file')
-		flash('Изображение не загружено', 'bad')
+	#if not re.search('^img[0-9]{8}-[0-9]{6}\.jpg', fname.lower()):
+	#	flash('Неверный формат имени файла', 'bad')
+	#	return 'Недопустимое имя файла', 400
+		try:
+			img = pImage.open(img_file)
+			exifDataRaw = img._getexif()
+			lat, lon, shoot_time = locate_from_exif(exifDataRaw)
+			w,h = img.size
+			#print("w{0}, h{1}".format(w,h))
+			l = min(w,h)
+			scale_factor = l//400
+			img = img.reduce(scale_factor)
+			w,h = img.size
+			buf = BytesIO()
+			img.save(buf, 'jpeg')
+			img_text = base64.b64encode(buf.getbuffer()).decode()
+			new_img = Image(
+				user_id = session['user_id'],
+				name = img_file.filename,
+				img = img_text,
+				width = w,
+				height = h,
+				lat=lat,
+				lon=lon,
+				shoot_time=shoot_time)
+			db.session.add(new_img)
+			db.session.commit()
+			flash('Изображение успешно загружено', 'good')
+		except UnidentifiedImageError:
+			logging.exception('Error reading image file')
+			flash('Изображение не загружено', 'bad')
 	return redirect(url_for('index'))
 
 @app.route('/api/trk_data')
@@ -280,16 +284,17 @@ def process():
 	stops_table = {}
 	poi = []
 	image_markers = []
+	name = ''
 	fact_entry = Track.query.filter(Track.user_id==session['user_id'], Track.role=='Факт').all()
 	if len(fact_entry)==0:
 		logging.info('No fact track found')
 	else:
 		logging.info('Fact track found')
+		name = cut_name(fact_entry[0].name[:-4])
 		proc_xml = fact_entry[0].trk
 		proc_gpx = gpxpy.parse(proc_xml)
 		fact_line = make_line(proc_gpx)
-		if 'Calculate-stats' in ops.keys():
-			proc_gpx, stops_table, stop_points = find_stops(proc_gpx, float(ops['stop-threshold'])/3.6)
+		
 		if 'Add-images' in ops.keys():
 			proc_gpx, image_markers = make_image_points(proc_gpx, int(ops['time-shift']))
 			flash('Изображения добавлены', 'good')
@@ -304,13 +309,15 @@ def process():
 		if 'Smooth' in ops.keys():
 			proc_gpx.smooth(horizontal=True)
 			flash('Трек успешно сглажен', 'good')
+		if 'Calculate-stats' in ops.keys():
+			proc_gpx, stops_table, stop_points = find_stops(proc_gpx, float(ops['stop-threshold'])/3.6)
 		stats_mark = make_stats_mark(proc_gpx, 
 					fact_entry[0].name, 
 					float(ops['stop-threshold']))
 		proc_line = make_line(proc_gpx)
 		color_line, colormap = make_speed_colorline(proc_gpx)
 		logging.debug(f'Colorline: {color_line}')
-		logging.info(f'Num of waypoints in proc track: {len(proc_gpx.waypoints)}')
+		logging.debug(f'Num of waypoints in proc track: {len(proc_gpx.waypoints)}')
 	plan_entry = Track.query.filter(Track.user_id==session['user_id'], Track.role=='План').all()
 	if len(plan_entry)==0:
 		logging.info('No plan track found')
@@ -329,9 +336,11 @@ def process():
 		if len(fact_line)>0:
 			proc_gpx, poi = make_poi(proc_gpx, poi_gpx)
 		else:
-			blank_gpx=gpxpy.gpx.GPX()
+			blank_gpx = gpxpy.gpx.GPX()
 			proc_gpx, poi = make_poi(blank_gpx, poi_gpx)
-	
+			name = cut_name(poi_entry[0].name[:-4])
+	if not name == '' and len(proc_gpx.tracks)>0:
+		proc_gpx.tracks[0].name = name
 	map_frame = draw_map(plan_line, fact_line, 
 						proc_line, color_line,
 						colormap, stats_mark, 
