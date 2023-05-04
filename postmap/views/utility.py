@@ -465,18 +465,20 @@ def make_image_points(gpx, offset: int):
 		i = 0
 		for image in images:
 			logging.debug(f'Image name: {image.name}')
-			if re.search('^img[0-9]{8}-[0-9]{6}\.jpg', image.name.lower()):
-				t = datetime(year = int(image.name[3:7]), 
-				month = int(image.name[7:9]),
-				day = int(image.name[9:11]),
-				hour = int(image.name[12:14]),
-				minute = int(image.name[14:16]),
-				second = int(image.name[16:18]), tzinfo=points[0].time.tzinfo)
-				logging.info(f'Image time: {t}')
+			if re.search('^img[-_]*[0-9]{8}[-_]*[0-9]{6}.*\.jpg', image.name.lower()):
+				i = re.search('[\D][0-9]{8}[\D]', image.name).span()[0]
+				j = re.search('[\D][0-9]{6}[\D]', image.name).span()[0]
+				t = datetime(year = int(image.name[i+1:i+5]), 
+				month = int(image.name[i+5:i+7]),
+				day = int(image.name[i+7:i+9]),
+				hour = int(image.name[j+1:j+3]),
+				minute = int(image.name[j+3:j+5]),
+				second = int(image.name[j+5:j+7]), tzinfo=points[0].time.tzinfo)
+				logging.debug(f'Image time: {t}')
 			elif not image.shoot_time is None:
 				t = image.shoot_time
 				t = t.replace(tzinfo=points[0].time.tzinfo)
-				logging.info(f'Image time: {t}')
+				logging.debug(f'Exif time: {t}')
 			if not t is None:
 				hr = t.hour - offset
 				if hr>=0:
@@ -487,14 +489,14 @@ def make_image_points(gpx, offset: int):
 					i += 1
 				lat = points[i].latitude
 				lon = points[i].longitude
-				logging.info(f'Image {image.name} located by time')
-				logging.info(f'Image {image.name} location: lat={lat}, lon={lon}')
+				logging.debug(f'Image {image.name} located by time')
+				logging.debug(f'Image {image.name} location: lat={lat}, lon={lon}')
 			elif not image.lat is None and not image.lon is None:
 				lat = float(image.lat)
 				lon = float(image.lon)
-				logging.info(f'Image {image.name} located by geoExif')
+				logging.debug(f'Image {image.name} located by geoExif')
 			else:
-				logging.info(f'Image {image.name} is not located')
+				logging.debug(f'Image {image.name} is not located')
 			if not lat is None and not lon is None:
 				gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(
 				latitude = lat, longitude = lon, 
@@ -646,16 +648,18 @@ def locate_from_exif(raw_ExifData):
 				decodedTag = ExifTags.GPSTAGS.get(tag, tag)
 				gpsData[decodedTag] = value
 			try:
-				lat = float(gpsData['GPSLatitude'][0][0])/gpsData['GPSLatitude'][0][1]+float(gpsData['GPSLatitude'][1][0])/gpsData['GPSLatitude'][1][1]/60                 +float(gpsData['GPSLatitude'][2][0])/gpsData['GPSLatitude'][2][1]/3600
+				#logging.info(f'GPSLat: {gpsData["GPSLatitude"]}')
+				lat = float(gpsData['GPSLatitude'][0])+float(gpsData['GPSLatitude'][1])/60+float(gpsData['GPSLatitude'][2])/3600
+				#logging.info(f'Lat: {lat}')
 				if(gpsData['GPSLatitudeRef'] != u'N'):
 					lat = -lat
-				lon = float(gpsData['GPSLongitude'][0][0])/gpsData['GPSLongitude'][0][1]+float(gpsData['GPSLongitude'][1][0])/gpsData['GPSLongitude'][1][1]/60                 +float(gpsData['GPSLongitude'][2][0])/gpsData['GPSLongitude'][2][1]/3600
+				lon = float(gpsData['GPSLongitude'][0])+float(gpsData['GPSLongitude'][1])/60+float(gpsData['GPSLongitude'][2])/3600
 				if(gpsData['GPSLongitudeRef'] != u'E'):
 					lon = -lon
 			except KeyError:
 				pass
-		else:
-			logging.info(exifData['DateTime'])
+		if exifData.get('DateTime'):
+			#logging.info(f'Shoot time: {exifData["DateTime"]}')
 			shoot_time = datetime.strptime(exifData['DateTime'], '%Y:%m:%d %H:%M:%S').replace(tzinfo=timezone.utc)
-			logging.info(shoot_time.tzinfo)
+			#logging.info(f'Timezone: {shoot_time.tzinfo}')
 	return lat, lon, shoot_time
