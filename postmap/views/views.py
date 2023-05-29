@@ -28,7 +28,7 @@ logging.basicConfig(format=format,
 	datefmt="%H:%M:%S")
 	
 # comment next line if debug is not needed	
-# logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.DEBUG)
 
 #========================
 # View functions
@@ -103,13 +103,18 @@ def add_fact():
 		joint_gpx.tracks.append(gpxpy.gpx.GPXTrack())
 		joint_gpx.tracks[0].segments.append(segment)
 		if joint_gpx.has_times():
+			logging.debug(f'add_fakt: GPX has times')
 			#joint_gpx.tracks[0].segments[0].points = sorted(joint_gpx.tracks[0].segments[0].points, 
 			#	key=lambda point: point.time)
 			joint_gpx.tracks[0].segments[0].points[0].speed=0
 			joint_gpx.tracks[0].segments[0].points[-1].speed=0
 			try:
 				joint_gpx.add_missing_speeds()
+				speeds = [p.speed for p in joint_gpx.tracks[0].segments[0].points]
+				logging.debug(f'add_fakt: point speed example {speeds}')
+				logging.debug(f'add_fakt: Speeds added to GPX')
 			except NameError:
+				logging.debug(f'add_fact: Adding speeds failed')
 				pass
 		xml = joint_gpx.to_xml('1.0')
 		track_entry = Track(

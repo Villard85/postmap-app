@@ -257,12 +257,19 @@ def wpts_to_csv(gpx):
 def make_speed_colorline(gpx):
 	if gpx.has_times():
 		line = make_line(gpx)
+		speeds=[]
+		locations=[]
 		try:
-			speeds = [p.speed*3.6 for p in gpx.tracks[0].segments[0].points]
+			for p, l in zip(gpx.tracks[0].segments[0].points, line):
+				if not p.speed==None:
+					speeds.append(p.speed*3.6)
+					locations.append(l)
 		except TypeError:
+			logging.exception(f'make_speed_colorline: exception occured')
+			logging.debug(f"Speed calculation failed")
 			return None, None
 		color_line = features.ColorLine(
-				 positions=line,
+				 positions=locations,
 				 colors=speeds,
 				 colormap=['red', 'yellow', 'green'],
 			    weight=5)
@@ -369,11 +376,12 @@ def find_stops(gpx, threshold: float):
 		ele_list = [p.elevation for p in gpx.tracks[0].segments[0].points]
 		try:
 			for i, p in enumerate(gpx.tracks[0].segments[0].points):
-				if p.speed < threshold and not flag:
-					stop_start.append(p.time)
-					flag = True
-					temp_i.append(i) 
-				elif p.speed >= threshold and flag:
+				if not p.speed==None and not flag:
+					if p.speed < threshold:
+						stop_start.append(p.time)
+						flag = True
+						temp_i.append(i) 
+				elif flag and not p.speed==None and p.speed>=threshold:
 					stop_lat.append(lat_list[temp_i[len(temp_i)//2]])
 					stop_lon.append(lon_list[temp_i[len(temp_i)//2]])
 					stop_ele.append(ele_list[temp_i[len(temp_i)//2]])
@@ -412,6 +420,7 @@ def find_stops(gpx, threshold: float):
 												time = stops_table['start_time_UTC'][i]))
 			gpx.waypoints += stop_waypoints
 		except TypeError:
+			logging.exception(f'find_stops: stops calculation failed')
 			return gpx, {}, []
 		return gpx, stops_table, stop_points
 	else:
