@@ -30,7 +30,7 @@ import branca.colormap as cm
 from postmap import app
 from postmap import db
 from postmap.models.tables import Image, Track, Result
-from flask import flash, session
+from flask import flash, session, abort
 
 #==================
 # Utility functions
@@ -123,7 +123,8 @@ def upload_trk_file(up_file):
 		file_ext = fname.rsplit('.', 1)[1].lower()
 		if file_ext not in app.config['UPLOAD_EXTENSIONS']:
 			flash('Неверное расширение файла', 'bad')
-			abort(400)
+			#abort(400)
+			return None, None
 		try:
 			gpx = gpxpy.parse(up_file)
 			info = track_info(gpx)

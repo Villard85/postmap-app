@@ -144,12 +144,12 @@
 			<label class="check-label" for="proc-simp">Упростить трек</label>
 			<input class="proc-option" type='checkbox' name="Simplify" id="proc-simp"/>
 			<label class="input-label" for="epsilon">Эпсилон [м]</label>
-			<input class="proc-input" type="number" step="0.1" name="epsilon" id="epsilon"
+			<input class="proc-input" type="number" step="0.1" min="0.1" name="epsilon" id="epsilon"
 			 value="5" required><br>
 			<label class="check-label" for="proc-mark">Разметить трек</label>
 			<input class="proc-option" type='checkbox' name="Mark" id="proc-mark"/>
 			<label class="input-label" for="epsilon">Шаг разметки [км]</label>
-			<input class="proc-input" type="number" step="1" name="step" id="step" 
+			<input class="proc-input" type="number" step="1" min="1" name="step" id="step" 
 			value="2" required><br>
 			<label class="check-label" for="proc-smooth">Сгладить трек</label>
 			<input class="proc-option" type='checkbox' name="Smooth"/ id="proc-smooth"><br>
@@ -161,7 +161,7 @@
 			<label class="check-label" for="proc-stats">Вычислить статистику трека</label>
 			<input class="proc-option" type='checkbox' name="Calculate-stats" id="proc-stats"/>
 			<label class="input-label" for="stop-threshold">Порог остановки [км/ч]</label>
-			<input class="proc-input" type="number" step="0.1" name="stop-threshold" id="stop-threshold" 
+			<input class="proc-input" type="number" step="0.1" min="0.1" name="stop-threshold" id="stop-threshold" 
 			value="1" required><br>
 			<input class="check-label" type="Submit" value="Нарисовать карту">
 		</form>
