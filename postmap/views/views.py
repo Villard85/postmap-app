@@ -79,10 +79,10 @@ def add_plan():
 		db.session.commit()
 		flash('Файл успешно загружен', 'good')
 	except sqlalchemy.exc.IntegrityError:
-		logging.exception('Exception while adding plan track to database!')
+		logging.exception('[add_plan] Exception while adding plan track to database!')
 		#flash('Плановый трек уже загружен', 'bad')
 	except Exception:
-		logging.exception('Exception while adding plan track!')
+		logging.exception('[add_plan] Exception while adding plan track!')
 		flash('Что-то пошло не так', 'bad')
 	return redirect(url_for('index'))
 	
@@ -103,7 +103,7 @@ def add_fact():
 		joint_gpx.tracks.append(gpxpy.gpx.GPXTrack())
 		joint_gpx.tracks[0].segments.append(segment)
 		if joint_gpx.has_times():
-			logging.debug(f'add_fakt: GPX has times')
+			logging.debug(f'[add_fact] GPX has times')
 			#joint_gpx.tracks[0].segments[0].points = sorted(joint_gpx.tracks[0].segments[0].points, 
 			#	key=lambda point: point.time)
 			joint_gpx.tracks[0].segments[0].points[0].speed=0
@@ -111,10 +111,10 @@ def add_fact():
 			try:
 				joint_gpx.add_missing_speeds()
 				speeds = [p.speed for p in joint_gpx.tracks[0].segments[0].points]
-				logging.debug(f'add_fakt: point speed example {speeds}')
-				logging.debug(f'add_fakt: Speeds added to GPX')
+				logging.debug(f'[add_fact] point speed example {speeds}')
+				logging.debug(f'[add_fact] Speeds added to GPX')
 			except NameError:
-				logging.debug(f'add_fact: Adding speeds failed')
+				logging.debug(f'[add_fact] Adding speeds failed')
 				pass
 		xml = joint_gpx.to_xml('1.0')
 		track_entry = Track(
@@ -134,10 +134,10 @@ def add_fact():
 		db.session.commit()
 		flash('Файл успешно загружен', 'good')
 	except sqlalchemy.exc.IntegrityError:
-		logging.exception('Exception while adding fact track to database!')
+		logging.exception('[add_fact] Exception while adding fact track to database!')
 		#flash('Фактический трек уже загружен', 'bad')
 	except Exception:
-		logging.exception('Exception while adding fact track!')
+		logging.exception('[add_fact] Exception while adding fact track!')
 		flash('Что-то пошло не так', 'bad')
 	return redirect(url_for('index'))
 
@@ -170,10 +170,10 @@ def add_poi():
 			db.session.commit()
 			flash('Файл успешно загружен', 'good')
 		except sqlalchemy.exc.IntegrityError:
-			logging.exception('Exception while adding POI file to database!')
+			logging.exception('[add_poi] Exception while adding POI file to database!')
 			#flash('Файл с точками уже загружен', 'bad')
 		except Exception:
-			logging.exception('Exception while adding POI!')
+			logging.exception('[add_poi] Exception while adding POI!')
 			flash('Что-то пошло не так', 'bad')
 	return redirect(url_for('index'))	
 
@@ -218,7 +218,7 @@ def add_img():
 			db.session.commit()
 			flash('Изображение успешно загружено', 'good')
 		except UnidentifiedImageError:
-			logging.exception('Error reading image file')
+			logging.exception('[add_img] Error reading image file')
 			flash('Изображение не загружено', 'bad')
 	return redirect(url_for('index'))
 
@@ -292,14 +292,15 @@ def process():
 	name = ''
 	fact_entry = Track.query.filter(Track.user_id==session['user_id'], Track.role=='Факт').all()
 	if len(fact_entry)==0:
-		logging.info('No fact track found')
+		logging.info('[process] No fact track found')
 	else:
-		logging.info('Fact track found')
+		logging.info('[process] Fact track found')
 		name = cut_name(fact_entry[0].name[:-4])
 		proc_xml = fact_entry[0].trk
 		proc_gpx = gpxpy.parse(proc_xml)
 		fact_line = make_line(proc_gpx)
-		
+		logging.debug(f'[process] Fact line length: {len(fact_line)}')
+				
 		if 'Add-images' in ops.keys():
 			proc_gpx, image_markers = make_image_points(proc_gpx, int(ops['time-shift']))
 			flash('Изображения добавлены', 'good')
@@ -320,22 +321,23 @@ def process():
 					fact_entry[0].name, 
 					float(ops['stop-threshold']))
 		proc_line = make_line(proc_gpx)
+		logging.debug(f'[process] Proc line length: {len(proc_line)}')
 		color_line, colormap = make_speed_colorline(proc_gpx)
-		logging.debug(f'Colorline: {color_line}')
-		logging.debug(f'Num of waypoints in proc track: {len(proc_gpx.waypoints)}')
+		logging.debug(f'[process] Colorline: {color_line}')
+		logging.debug(f'[process] Num of waypoints in proc track: {len(proc_gpx.waypoints)}')
 	plan_entry = Track.query.filter(Track.user_id==session['user_id'], Track.role=='План').all()
 	if len(plan_entry)==0:
-		logging.info('No plan track found')
+		logging.info('[process] No plan track found')
 	else:
-		logging.info('Plan track found')
+		logging.info('[process] Plan track found')
 		plan_xml = plan_entry[0].trk
 		plan_gpx = gpxpy.parse(plan_xml)
 		plan_line = make_line(plan_gpx)
 	poi_entry = Track.query.filter(Track.user_id==session['user_id'], Track.role=='Точки').all()
 	if len(poi_entry)==0:
-		logging.info('POI file not found')
+		logging.info('[process] POI file not found')
 	else:
-		logging.info('POI file found')
+		logging.info('[process] POI file found')
 		poi_xml = poi_entry[0].trk
 		poi_gpx = gpxpy.parse(poi_xml)
 		if len(fact_line)>0:

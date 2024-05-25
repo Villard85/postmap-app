@@ -131,7 +131,7 @@ def upload_trk_file(up_file):
 			flash('Файл \"{}\" успешно прочитан'.format(fname), 'good')
 			return gpx, info
 		except Exception:
-			logging.exception('Error while uploading file!')
+			logging.exception('[upload_trk_file] Error while uploading file!')
 			#map_view=''
 			flash('Неверный формат файла', 'bad')
 			return None, None
@@ -174,8 +174,8 @@ def track_to_csv(gpx):
 	except IndexError:
 		pts = []
 	length = make_length_list(gpx)[0]
-	logging.debug(f'Lenght length = {len(length)}')
-	logging.debug(f'Points length = {len(pts)}')
+	logging.debug(f'[track_to_csv] Lenght length = {len(length)}')
+	logging.debug(f'[track_to_csv] Points length = {len(pts)}')
 	for i, p in enumerate(pts):
 		s=[]
 		if p.latitude:
@@ -265,9 +265,11 @@ def make_speed_colorline(gpx):
 				if not p.speed==None:
 					speeds.append(p.speed*3.6)
 					locations.append(l)
+			if len(speeds)<3:
+					return None, None	
 		except TypeError:
-			logging.exception(f'make_speed_colorline: exception occured')
-			logging.debug(f"Speed calculation failed")
+			logging.exception(f'[make_speed_colorline] exception occured')
+			logging.debug(f"[make_speed_colorline] Speed calculation failed")
 			return None, None
 		color_line = features.ColorLine(
 				 positions=locations,
@@ -421,10 +423,11 @@ def find_stops(gpx, threshold: float):
 												time = stops_table['start_time_UTC'][i]))
 			gpx.waypoints += stop_waypoints
 		except TypeError:
-			logging.exception(f'find_stops: stops calculation failed')
+			logging.exception(f'[find_stops] stops calculation failed')
 			return gpx, {}, []
 		return gpx, stops_table, stop_points
 	else:
+		logging.debug('[find_stops] no timestamps found, stops-table isn not created')
 		return gpx, {}, []
 	
 def make_marks(gpx, step):
@@ -499,14 +502,14 @@ def make_image_points(gpx, offset: int):
 					i += 1
 				lat = points[i].latitude
 				lon = points[i].longitude
-				logging.debug(f'Image {image.name} located by time')
-				logging.debug(f'Image {image.name} location: lat={lat}, lon={lon}')
+				logging.debug(f'[make_image_points] Image {image.name} located by time')
+				logging.debug(f'[make_image_points] Image {image.name} location: lat={lat}, lon={lon}')
 			elif not image.lat is None and not image.lon is None:
 				lat = float(image.lat)
 				lon = float(image.lon)
-				logging.debug(f'Image {image.name} located by geoExif')
+				logging.debug(f'[make_image_points] Image {image.name} located by geoExif')
 			else:
-				logging.debug(f'Image {image.name} is not located')
+				logging.debug(f'[make_image_points] Image {image.name} is not located')
 			if not lat is None and not lon is None:
 				gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(
 				latitude = lat, longitude = lon, 
@@ -588,19 +591,23 @@ def draw_map(
 		for ms in mark_symbols:
 			ms.add_to(marks_group)
 	if len(plan_track_line)>0:
+		logging.debug('[draw_map] Adding plan track to map')
 		t1 = folium.FeatureGroup(name = 'Плановый трек')
 		map_view.add_child(t1)
 		folium.PolyLine(plan_track_line, color="blue", weight=5, opacity=0.5).add_to(t1)
 	if len(fact_track_line)>0:
+		logging.debug('[draw_map] Adding fact track to map')
 		t2 = folium.FeatureGroup(name = 'Фактический трек')
 		map_view.add_child(t2)
 		folium.PolyLine(fact_track_line, color="magenta", weight=5, opacity=0.5).add_to(t2)
 	if not color_line==None and not colormap==None:
+		logging.debug('[draw_map] Adding colorized processed track to map')
 		t3 = folium.FeatureGroup(name = 'Обработанный трек')
 		map_view.add_child(t3)
 		color_line.add_to(t3)
 		map_view.add_child(colormap)
 	elif len(proc_track_line)>0:
+		logging.debug('[draw_map] Adding non colorized processed track to map')
 		t3 = folium.FeatureGroup(name = 'Обработанный трек')
 		map_view.add_child(t3)
 		folium.PolyLine(proc_track_line, color="red", weight=5, opacity=0.5).add_to(t3)
